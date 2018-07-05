@@ -1,4 +1,3 @@
-#集群选主方案简介
 elasticsearch
 -
 <font face="微软雅黑" color=gray>
