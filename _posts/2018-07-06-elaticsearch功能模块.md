@@ -14,10 +14,22 @@ zen为默认的发现机制，形式为单播，当master节点down掉后，集�
 
 ElectMasterService类：
 
-![1530807057066](C:\Users\pc\AppData\Local\Temp\1530807057066.png)
+```
+public ElectMasterService.MasterCandidate electMaster(Collection<ElectMasterService.MasterCandidate> candidates) {
+    assert this.hasEnoughCandidates(candidates);
+
+    List<ElectMasterService.MasterCandidate> sortedCandidates = new ArrayList(candidates);
+    sortedCandidates.sort(ElectMasterService.MasterCandidate::compare);
+    return (ElectMasterService.MasterCandidate)sortedCandidates.get(0);
+}
+```
 
 没有master节点，则将ping到的所有节点进行排序，选取排序后的第一个投票其为master。
 
-![1530807351606](C:\Users\pc\AppData\Local\Temp\1530807351606.png)
+```
+public DiscoveryNode tieBreakActiveMasters(Collection<DiscoveryNode> activeMasters) {
+    return (DiscoveryNode)activeMasters.stream().min(ElectMasterService::compareNodes).get();
+}
+```
 
 如果ping到有master节点，选取其中节点id最小的投票。
