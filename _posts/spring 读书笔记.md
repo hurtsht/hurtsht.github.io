@@ -1,0 +1,46 @@
+### spring 读书笔记
+
+#### Bean
+
+InstantiationStratehy 负责实例化BeanDefinition中的bean。采用策略模式，相当于new操作，不会设置bean的属性，属性填充由BeanWrapper完成。
+
+BeanWrapper完成bean属性填充工作，相当于一个代理器。BeanWapper还有两个顶级类接口，分别是PropetryAccessor（定义了各种访问Bean属性的方法）和PropertyEditorRegistry（属性编辑器的注册表）。所以是实现类BeanWrapper具有三重身份：1.Bean包裹器。2.属性访问器。3.属性编辑器注册表。BeanWrapperImpl使用BeanUtils工具类对Bean进行反射操作，设置属性。
+
+Bean作用域：单例（默认），原型，会话，请求。
+
+当需要在单例的bean中注入会话bean时，由于单例bean在spring上下文加载时，便会创建，而此时会话bean直到某个用户进入系统时，才会创建。同时单例bean肯定是希望对会话bean进行差异化的注入，根据具体的用户而定。对上述两个问题spring解决方案是：spring会注入一个会话bean的代理，这个代理会暴露与会话bean相同的方法，当具体调用时，代理会对其进行懒解析并将调用委托给会话作用域内真正的bean。
+
+Bean属性注入：属性占位符。Spring表达式语言（SpEL)。
+
+
+
+#### 切面：
+
+相关术语
+
+通知：通知描述了切面的工作，以及方法调用的时机。通知类型包括前置通知(Before)，后置通知(After)，返回通知(After-returning)，异常通知(After－throwing)，环绕通知(Around 通知包裹了被通知的方法，在被通知的方法调用之前和调用之后执行自定义的行为)
+
+连接点，切点，切面，引入，织入。
+
+spring提供四种类型的AOP支持：
+
+1.基于代理的经典spring aop。
+
+2.纯POJO切面。
+
+3.@AspectJ注解驱动的切面
+
+4.注入式AspectJ切面。
+
+#### spring web
+
+请求流程：请求到达前端控制器DispatcherServlet，其会查询处理器映射(handler mapping)来确定请求那个控制器，然后将请求发送给对应的Spring MVC控制器(controller)，控制器完成逻辑处理后，通常会产生一些信息，这些信息需要返回给用户并在浏览器上显示，这些信息被成为模型。控制器将模型数据打包，并且标示出用于渲染输出的视图名，将请求联通模型和视图名发送回DispatcherServlet。DispatcherServlet将会使用视图解析器来将逻辑视图名匹配为一个特定的视图实现，将模型数据传给对应的视图。
+
+当DispatcherServlet启动时，它会创建Spring应用上下文，并加在配置文件或配置类中所声明的bean。
+
+
+
+
+
+
+
