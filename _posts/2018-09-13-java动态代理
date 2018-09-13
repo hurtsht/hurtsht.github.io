@@ -1,0 +1,70 @@
+## java 动态代理
+
+proxy:
+
+newProxyInstance->getProxyClass0->proxyClassCache.get(loads,interfaces)
+
+proxyClassCache.get方法中使用二级缓存，第一级缓存是参数类加载器，先去参数loads对应的缓存value，没有的话就putIfAbsent（有重复值不会覆盖，返回已有值）
+
+```java
+Object cacheKey = CacheKey.valueOf(key, refQueue);
+
+// lazily install the 2nd level valuesMap for the particular cacheKey
+ConcurrentMap<Object, Supplier<V>> valuesMap = map.get(cacheKey);
+if (valuesMap == null) {
+    ConcurrentMap<Object, Supplier<V>> oldValuesMap
+        = map.putIfAbsent(cacheKey,
+                          valuesMap = new ConcurrentHashMap<>());
+    if (oldValuesMap != null) {
+        valuesMap = oldValuesMap;
+    }
+}
+```
+
+然后取二级缓存，key为接口数组生成，当缓存中没有时，使用工厂类生成代理类。
+
+```java
+ // create subKey and retrieve the possible Supplier<V> stored by that
+    // subKey from valuesMap
+    Object subKey = Objects.requireNonNull(subKeyFactory.apply(key, parameter));
+    Supplier<V> supplier = valuesMap.get(subKey);
+    Factory factory = null;
+
+    while (true) {
+        if (supplier != null) {
+            // supplier might be a Factory or a CacheValue<V> instance
+            V value = supplier.get();
+            if (value != null) {
+                return value;
+            }
+        }
+        // else no supplier in cache
+        // or a supplier that returned null (could be a cleared CacheValue
+        // or a Factory that wasn't successful in installing the CacheValue)
+
+        // lazily construct a Factory
+        if (factory == null) {
+            factory = new Factory(key, parameter, subKey, valuesMap);
+        }
+
+        if (supplier == null) {
+            supplier = valuesMap.putIfAbsent(subKey, factory);
+            if (supplier == null) {
+                // successfully installed Factory
+                supplier = factory;
+            }
+            // else retry with winning supplier
+        } else {
+            if (valuesMap.replace(subKey, supplier, factory)) {
+                // successfully replaced
+                // cleared CacheEntry / unsuccessful Factory
+                // with our Factory
+                supplier = factory;
+            } else {
+                // retry with current supplier
+                supplier = valuesMap.get(subKey);
+            }
+        }
+    }
+}
+```
